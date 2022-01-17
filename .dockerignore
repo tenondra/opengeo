@@ -1,0 +1,10 @@
+opengeo-frontend/
+db.sqlite3
+**/__pycache__/
+.dockerignore
+whl/
+docker-cache/
+.idea/
+.git/
+.poetry/
+.venv/

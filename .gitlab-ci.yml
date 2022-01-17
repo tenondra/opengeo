@@ -1,0 +1,115 @@
+image: docker:20
+
+stages:
+  - test
+  - build
+  - build-complete
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_BUILDKIT: 1
+
+cache:
+  paths:
+    - docker-cache
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
+code_quality:
+  tags:
+    - private
+  artifacts:
+    paths: [gl-code-quality-report.json]
+
+test:
+  image: $REGISTRY/xmalanik/opengeo-base
+  stage: test
+  tags:
+    - private
+  before_script:
+    - poetry config --local cache-dir $PWD/.poetry/cache
+    - poetry config --local virtualenvs.in-project true
+    - poetry install
+  script:
+    - poetry run python manage.py migrate
+    - poetry run python manage.py check opengeo
+    - timeout --preserve-status 10s poetry run uvicorn opengeo-project.asgi:application
+  cache:
+    paths:
+      - .poetry
+      - .venv
+
+.build-template:
+  variables:
+    PROJECT_REGISTRY: $PRIVATE_REGISTRY/$CI_PROJECT_NAMESPACE/
+    IMAGE_TAG: $PRIVATE_REGISTRY/$CI_PROJECT_NAMESPACE/opengeo-backend
+    APP_TAG: $PRIVATE_REGISTRY/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+    GIT_SUBMODULE_STRATEGY: recursive
+    BUILDX_VERSION: v0.5.1
+  before_script:
+    - apk add curl
+    - mkdir -p ~/.docker/cli-plugins
+    - curl -sSLo ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/$BUILDX_VERSION/buildx-$BUILDX_VERSION.${CI_RUNNER_EXECUTABLE_ARCH/\//-}
+    - chmod +x ~/.docker/cli-plugins/docker-buildx
+    - docker run --privileged --rm tonistiigi/binfmt --install all
+    - docker context create builder-ctx
+    - docker context ls
+    - docker buildx create --name gitlab-builder --use builder-ctx
+    - docker buildx inspect --bootstrap
+    - docker login -u $PRIVATE_REGISTRY_USER -p $PRIVATE_REGISTRY_PASSWORD $PRIVATE_REGISTRY
+
+build:
+  stage: build
+  services:
+    - docker:20-dind
+  only:
+    - /^v[0-9a-z.-]+$/ # v<version> tags only, i.e. v2 v0.1.0 v1.0.0-alpha.1
+  except:
+    - branches
+    - triggers
+  tags:
+    - private
+  extends:
+    - .build-template
+  script:
+    - docker buildx build
+      --cache-from type=local,src=./docker-cache
+      --cache-to type=local,dest=./docker-cache,mode=max
+      --platform linux/amd64
+      -t $IMAGE_TAG:$CI_COMMIT_SHORT_SHA
+      -t $IMAGE_TAG:$CI_COMMIT_TAG
+      -t $IMAGE_TAG:latest
+      --push
+      .
+
+build-to-registry:
+  stage: build-complete
+  services:
+    - docker:20-dind
+  only:
+    - /^v[0-9a-z.-]+$/ # v<version> tags only, i.e. v2 v0.1.0 v1.0.0-alpha.1
+  except:
+    - branches
+    - triggers
+  tags:
+    - private
+  extends:
+    - .build-template
+  script:
+    - docker buildx build
+      --cache-from type=local,src=./docker-cache
+      --cache-to type=local,dest=./docker-cache,mode=max
+      --platform linux/amd64
+      -f Dockerfile.complete
+      -t $APP_TAG:$CI_COMMIT_SHORT_SHA
+      -t $APP_TAG:$CI_COMMIT_TAG
+      -t $APP_TAG:latest
+      --build-arg CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA
+      --build-arg PROJECT_REGISTRY=$PROJECT_REGISTRY
+      --build-arg PRIVATE_REGISTRY=$PRIVATE_REGISTRY
+      --build-arg REGISTRY_LOGIN=$PRIVATE_REGISTRY_USER
+      --build-arg REGISTRY_PASSWORD=$PRIVATE_REGISTRY_PASSWORD
+      --build-arg FRONTEND_COMMIT_SHORT_SHA=$(git rev-parse --short=8 HEAD:opengeo-frontend)
+      --push
+      .

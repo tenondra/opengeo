@@ -1,0 +1,40 @@
+version: "2"
+plugins:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - python
+  radon:
+    enabled: true
+  pylint:
+    enabled: true
+    plugins:
+      - django
+    django_settings_module: opengeo-project.settings
+  fixme:
+    enabled: true
+  pep8:
+    enabled: true
+  sonar-python:
+    enabled: true
+exclude_patterns:
+  - config/
+  - db/
+  - dist/
+  - features/
+  - "**/node_modules/"
+  - script/
+  - "**/spec/"
+  - "**/test/"
+  - "**/tests/"
+  - Tests/
+  - "**/vendor/"
+  - "**/*_test.go"
+  - "**/*.d.ts"
+  - "**/*.min.js"
+  - "**/*.min.css"
+  - "**/__tests__/"
+  - "**/__mocks__/"
+  - "**/.venv/"
+  - "**/opengeo-frontend/"

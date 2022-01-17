@@ -1,0 +1,7 @@
+*
+!opengeo-frontend/docker/.env.example
+!opengeo-frontend/.env
+!docker-compose.yml
+!docker-compose.complete.yml
+!README.md
+!config/*

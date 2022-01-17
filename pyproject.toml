@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "opengeo"
+version = "0.2.0"
+description = "An open source GeoGuessr alternative"
+authors = ["Ondrej Malanik <onmalanik@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+Django = "^3.1.7"
+numpy = "^1.20.1"
+requests = "^2.25.1"
+fake-useragent = "^0.1.11"
+django-leaflet = "^0.28.0"
+affine = "^2.3.0"
+geoio = "^1.3.0"
+drf-spectacular = "^0.16.0"
+geopy = "^2.1.0"
+django-filter = "^2.4.0"
+django-mathfilters = "^1.0.0"
+graphene = "^2.1.8"
+graphene-django = "^2.15.0"
+graphene-django-extras = "^0.4.9"
+django-cors-headers = "^3.7.0"
+django-channels-graphql-ws = "^0.8.0"
+GDAL = "~3.2.3"
+Pillow = "^8.1.1"
+django-schema-graph = "^1.2.0"
+uvicorn = "^0.13.4"
+psycopg2-binary = "^2.8.6"
+websockets = "^9.1"
+django-graphql-jwt = "0.3.1"
+PyJWT = "1.7.0"
+aiohttp = "^3.7.4"
+graphql-core = "<3"
+djangorestframework = "^3.12.4"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

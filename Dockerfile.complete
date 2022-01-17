@@ -1,0 +1,33 @@
+FROM docker/compose:1.29.2
+
+ARG PROJECT_REGISTRY
+ARG PRIVATE_REGISTRY
+ARG CI_COMMIT_SHORT_SHA
+ARG FRONTEND_COMMIT_SHORT_SHA
+ARG REGISTRY_LOGIN
+ARG REGISTRY_PASSWORD
+
+ENV CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}
+ENV FRONTEND_COMMIT_SHORT_SHA=${FRONTEND_COMMIT_SHORT_SHA}
+ENV PROJECT_REGISTRY=${PROJECT_REGISTRY}
+ENV PRIVATE_REGISTRY=${PRIVATE_REGISTRY}
+ENV REGISTRY_LOGIN=${REGISTRY_LOGIN}
+ENV REGISTRY_PASSWORD=${REGISTRY_PASSWORD}
+ENV VOLUME='opengeo-config'
+ENV VOLUME_TARGET='/app/config'
+ENV VOLUME_TYPE='volume'
+
+COPY . /app
+WORKDIR /app
+
+# TODO: move this into an entrypoint script
+# Basically a one-off container that fires docker compose
+CMD ["sh", "-c", \
+    "docker run -d --rm --name opengeo-settings-intializer -v ${VOLUME}:/config alpine tail -f /dev/null \
+    && docker cp ./config/config.production.yml opengeo-settings-intializer:/config/config.yml \
+    && docker stop opengeo-settings-intializer \
+    && [[ -n ${REGISTRY_LOGIN} && -n ${REGISTRY_PASSWORD} ]] && docker login -u ${REGISTRY_LOGIN} -p ${REGISTRY_PASSWORD} ${PRIVATE_REGISTRY} \
+    && docker-compose -f docker-compose.complete.yml pull \
+    && docker-compose -f docker-compose.complete.yml up -d"]
+
+EXPOSE 443

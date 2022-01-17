@@ -1,0 +1,3 @@
+[submodule "opengeo-frontend"]
+	path = opengeo-frontend
+	url = ../opengeo-frontend

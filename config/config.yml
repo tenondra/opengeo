@@ -1,0 +1,8 @@
+DATABASES:
+  default:
+    ENGINE: "django.db.backends.sqlite3"
+    NAME: "./db.sqlite3"
+ALLOWED_HOSTS:
+  - "*"
+DEBUG: True
+SECRET_KEY: "3a%!9ma!t^cq_*ugdslecpqt^r-q5mf&8i!_@t554=q1rqig#("

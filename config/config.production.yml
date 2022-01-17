@@ -1,0 +1,12 @@
+DATABASES:
+  default:
+    ENGINE: "django.db.backends.postgresql"
+    HOST: "database"
+    PASSWORD: "opengeodummypassword"
+    PORT: "5432"
+    USER: "opengeo"
+    NAME: "opengeo"
+ALLOWED_HOSTS:
+  - "*"
+DEBUG: True
+SECRET_KEY: "3a%!9ma!t^cq_*ugdslecpqt^r-q5mf&8i!_@t554=q1rqig#("
